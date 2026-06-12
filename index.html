@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Water Reminder — AppADay 045</title>
+<style>
+  :root{
+    --deep: #0b3d4c;
+    --mid: #1c7c93;
+    --aqua: #4fb8c9;
+    --foam: #eaf6f6;
+    --sand: #f4ead8;
+    --ink: #0b2730;
+    --good: #2f9e6e;
+    --warn: #d97a3d;
+    --radius: 18px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(180deg, var(--foam) 0%, #dff0f1 100%);
+    color: var(--ink);
+  }
+
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 14px 16px;
+    background: var(--deep);
+    color: var(--foam);
+  }
+  header .title{
+    display:flex;
+    flex-direction:column;
+    line-height:1.15;
+  }
+  header .title .num{
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.65;
+    font-weight: 600;
+  }
+  header .title .name{
+    font-size: 19px;
+    font-weight: 700;
+  }
+  header a.portfolio{
+    color: var(--foam);
+    text-decoration: none;
+    font-size: 13px;
+    border: 1px solid rgba(234,246,246,0.35);
+    border-radius: 999px;
+    padding: 6px 12px;
+    white-space: nowrap;
+  }
+  header .gear{
+    background:none;
+    border:none;
+    color: var(--foam);
+    font-size: 22px;
+    line-height:1;
+    cursor:pointer;
+    padding: 4px 8px;
+    margin-left: 8px;
+  }
+  header .right{
+    display:flex;
+    align-items:center;
+  }
+
+  main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding: 22px 16px 40px;
+    gap: 22px;
+  }
+
+  /* --- Reminder banner --- */
+  .banner{
+    width:100%;
+    max-width: 360px;
+    background: var(--warn);
+    color: #fff;
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .banner.hidden{ display:none; }
+  .banner button{
+    background: rgba(255,255,255,0.22);
+    border: none;
+    color: #fff;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+
+  /* --- Signature: the vessel --- */
+  .vessel-wrap{
+    position:relative;
+    width: 160px;
+    height: 220px;
+    margin-top: 4px;
+  }
+  .vessel{
+    position:absolute;
+    inset:0;
+    border: 4px solid var(--deep);
+    border-top: none;
+    border-radius: 6px 6px 28px 28px;
+    overflow:hidden;
+    background: rgba(255,255,255,0.55);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5);
+  }
+  .vessel::before{
+    content:"";
+    position:absolute;
+    top:8px; left:14px;
+    width:14px; height:70%;
+    background: rgba(255,255,255,0.55);
+    border-radius: 10px;
+    filter: blur(1px);
+    z-index: 3;
+  }
+  .water{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    height: 0%;
+    background: linear-gradient(180deg, var(--aqua) 0%, var(--mid) 100%);
+    transition: height 0.9s cubic-bezier(.22,.9,.3,1.1);
+  }
+  .water .wave{
+    position:absolute;
+    top:-8px; left:-25%;
+    width:150%; height:18px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 70%);
+    animation: drift 4.5s ease-in-out infinite;
+  }
+  @keyframes drift{
+    0%,100%{ transform: translateX(0); }
+    50%{ transform: translateX(8%); }
+  }
+  .vessel-label{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    z-index: 4;
+    pointer-events:none;
+  }
+  .vessel-label .pct{
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--deep);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+  }
+  .vessel-label .pct.light{
+    color: var(--foam);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  }
+  .vessel-label .amt{
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--deep);
+    margin-top: 2px;
+  }
+  .vessel-label .amt.light{
+    color: var(--foam);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  }
+
+  .goal-line{
+    font-size: 14px;
+    color: var(--mid);
+    font-weight: 600;
+    text-align:center;
+  }
+
+  /* --- Setup card --- */
+  .setup-card{
+    width:100%;
+    max-width: 360px;
+    background: #ffffff;
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: 0 2px 10px rgba(11,61,76,0.08);
+    display:flex;
+    flex-direction:column;
+    gap: 12px;
+  }
+  .setup-card.hidden{ display:none; }
+  .setup-card h2{
+    margin:0;
+    font-size: 16px;
+    color: var(--deep);
+  }
+  .setup-card p{
+    margin:0;
+    font-size: 13px;
+    color: var(--mid);
+    line-height:1.5;
+  }
+  .type-toggle{
+    display:flex;
+    gap: 10px;
+  }
+  .type-toggle label{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    border: 1.5px solid #cfe3e6;
+    border-radius: 12px;
+    padding: 10px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--deep);
+    cursor:pointer;
+    background: var(--foam);
+  }
+  .type-toggle input{ margin:0; }
+  .type-toggle label.active{
+    border-color: var(--mid);
+    background: #dff3f5;
+  }
+
+  /* --- Capture button --- */
+  .capture-row{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 10px;
+    width:100%;
+    max-width: 360px;
+  }
+  .capture-row.hidden{ display:none; }
+  .capture-btn{
+    width:100%;
+    border:none;
+    border-radius: var(--radius);
+    background: var(--deep);
+    color: var(--foam);
+    font-size: 17px;
+    font-weight: 700;
+    padding: 16px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 10px;
+    cursor:pointer;
+    transition: transform 0.08s ease, background 0.2s ease;
+  }
+  .capture-btn:active{ transform: scale(0.98); }
+  .capture-btn:disabled{ opacity: 0.55; }
+  .capture-btn svg{ width:22px; height:22px; flex-shrink:0; }
+  .capture-btn.secondary{
+    background: var(--mid);
+  }
+
+  .hint{
+    font-size: 12.5px;
+    color: var(--mid);
+    text-align:center;
+    line-height:1.4;
+  }
+
+  input[type="file"]{ display:none; }
+
+  /* --- Status / analyzing --- */
+  .status-card{
+    width:100%;
+    max-width: 360px;
+    background: #ffffff;
+    border-radius: var(--radius);
+    padding: 16px;
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    box-shadow: 0 2px 10px rgba(11,61,76,0.08);
+  }
+  .status-card.hidden{ display:none; }
+  .spinner{
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 3px solid rgba(28,124,147,0.2);
+    border-top-color: var(--mid);
+    animation: spin 0.9s linear infinite;
+    flex-shrink:0;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+  .status-card .status-text{
+    font-size: 14px;
+    color: var(--deep);
+    font-weight: 600;
+  }
+  .status-card .status-sub{
+    font-size: 12.5px;
+    color: var(--mid);
+    margin-top: 2px;
+  }
+  .status-thumbs{
+    display:flex;
+    gap: 6px;
+    flex-shrink:0;
+  }
+  .status-thumb{
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    object-fit: cover;
+  }
+
+  /* --- Confirm card --- */
+  .confirm-card, .refill-card{
+    width:100%;
+    max-width: 360px;
+    background:#ffffff;
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: 0 2px 10px rgba(11,61,76,0.08);
+    display:flex;
+    flex-direction:column;
+    gap: 12px;
+  }
+  .confirm-card.hidden, .refill-card.hidden{ display:none; }
+  .confirm-top{
+    display:flex;
+    gap: 12px;
+    align-items:center;
+  }
+  .confirm-thumbs{
+    display:flex;
+    gap: 6px;
+    flex-shrink:0;
+  }
+  .confirm-thumb{
+    width: 52px; height: 52px;
+    border-radius: 10px;
+    object-fit: cover;
+  }
+  .confirm-text .est{
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--deep);
+  }
+  .confirm-text .desc{
+    font-size: 12.5px;
+    color: var(--mid);
+    margin-top: 2px;
+    line-height:1.35;
+  }
+  .confirm-adjust{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 14px;
+  }
+  .confirm-adjust button{
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 1.5px solid var(--mid);
+    background: #fff;
+    color: var(--mid);
+    font-size: 20px;
+    font-weight: 700;
+    cursor:pointer;
+    line-height:1;
+  }
+  .confirm-adjust .val{
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--deep);
+    min-width: 90px;
+    text-align:center;
+  }
+  .confirm-actions{
+    display:flex;
+    gap: 10px;
+  }
+  .confirm-actions button{
+    flex:1;
+    border:none;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor:pointer;
+  }
+  .confirm-actions .accept{
+    background: var(--good);
+    color: #fff;
+  }
+  .confirm-actions .discard{
+    background: var(--sand);
+    color: var(--deep);
+  }
+  .refill-card .question{
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--deep);
+    line-height:1.4;
+  }
+  .refill-card .sub{
+    font-size: 12.5px;
+    color: var(--mid);
+    line-height:1.4;
+  }
+  .refill-actions{
+    display:flex;
+    gap: 10px;
+  }
+  .refill-actions button{
+    flex:1;
+    border:none;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor:pointer;
+  }
+  .refill-actions .yes{
+    background: var(--good);
+    color: #fff;
+  }
+  .refill-actions .no{
+    background: var(--sand);
+    color: var(--deep);
+  }
+
+  /* --- Log --- */
+  .log-section{
+    width:100%;
+    max-width: 360px;
+  }
+  .log-section h2{
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--mid);
+    margin: 0 0 10px 2px;
+    font-weight: 700;
+  }
+  .log-empty{
+    font-size: 13.5px;
+    color: var(--mid);
+    background: #ffffff;
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align:center;
+    line-height:1.5;
+  }
+  .log-item{
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 4px rgba(11,61,76,0.06);
+  }
+  .log-thumbs{
+    display:flex;
+    gap: 4px;
+    flex-shrink:0;
+  }
+  .log-thumb{
+    width: 38px; height: 38px;
+    border-radius: 9px;
+    object-fit: cover;
+    background: var(--sand);
+  }
+  .log-info{ flex:1; min-width:0; }
+  .log-info .amt{
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--deep);
+  }
+  .log-info .time{
+    font-size: 11.5px;
+    color: var(--mid);
+    margin-top: 1px;
+    line-height:1.35;
+  }
+  .log-remove{
+    background:none;
+    border:none;
+    color: var(--mid);
+    font-size: 13px;
+    cursor:pointer;
+    padding: 6px 8px;
+    font-weight:600;
+    flex-shrink:0;
+  }
+
+  /* --- Settings modal --- */
+  .modal-overlay{
+    position:fixed; inset:0;
+    background: rgba(11,39,48,0.45);
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    z-index: 50;
+  }
+  .modal-overlay.hidden{ display:none; }
+  .modal{
+    width:100%;
+    max-width: 480px;
+    background: #ffffff;
+    border-radius: 22px 22px 0 0;
+    padding: 22px 20px 28px;
+    max-height: 86vh;
+    overflow-y:auto;
+  }
+  .modal h2{
+    margin: 0 0 14px;
+    font-size: 18px;
+    color: var(--deep);
+  }
+  .modal label{
+    display:block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--deep);
+    margin: 14px 0 6px;
+  }
+  .modal input{
+    width:100%;
+    padding: 12px 12px;
+    border-radius: 12px;
+    border: 1.5px solid #cfe3e6;
+    font-size: 16px;
+    font-family: inherit;
+    color: var(--ink);
+    background: var(--foam);
+  }
+  .modal input:focus{ outline: 2px solid var(--mid); }
+  .modal .type-toggle{ margin-top: 6px; }
+  .modal .modal-actions{
+    display:flex;
+    gap: 10px;
+    margin-top: 22px;
+  }
+  .modal .modal-actions button{
+    flex:1;
+    border:none;
+    border-radius: 12px;
+    padding: 13px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor:pointer;
+  }
+  .modal .save{
+    background: var(--deep);
+    color: var(--foam);
+  }
+  .modal .close{
+    background: var(--sand);
+    color: var(--deep);
+  }
+  .modal .note{
+    font-size: 12px;
+    color: var(--mid);
+    margin-top: 10px;
+    line-height: 1.45;
+  }
+  .modal .reset-link{
+    display:block;
+    margin-top: 16px;
+    font-size: 12.5px;
+    color: var(--warn);
+    font-weight: 700;
+    background:none;
+    border:none;
+    cursor:pointer;
+    padding:0;
+    text-align:left;
+  }
+
+  footer{
+    padding: 14px 16px 22px;
+    text-align:center;
+  }
+  footer a{
+    color: var(--mid);
+    font-size: 12.5px;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(28,124,147,0.35);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title">
+    <span class="num">AppADay 045</span>
+    <span class="name">Water Reminder</span>
+  </div>
+  <div class="right">
+    <a class="portfolio" href="https://augustineiacopelli.github.io/appaday/">Portfolio</a>
+    <button class="gear" id="settingsBtn" aria-label="Settings">⚙️</button>
+  </div>
+</header>
+
+<main>
+
+  <div class="banner hidden" id="reminderBanner">
+    <span>Time for a check-in — how's your glass looking?</span>
+    <button id="snoozeBtn">Snooze</button>
+  </div>
+
+  <div class="vessel-wrap">
+    <div class="vessel">
+      <div class="water" id="waterFill">
+        <div class="wave"></div>
+      </div>
+      <div class="vessel-label">
+        <span class="pct" id="pctLabel">0%</span>
+        <span class="amt" id="amtLabel">0 / 64 oz</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="goal-line" id="goalLine">Goal: 64 oz today</div>
+
+  <!-- Setup card, shown until a container is configured -->
+  <div class="setup-card hidden" id="setupCard">
+    <h2>Set up your container</h2>
+    <p>Photograph the glass, bottle, or mug you'll be drinking from. Claude will estimate how much it holds when full — you can adjust this afterward.</p>
+    <div class="type-toggle" id="setupTypeToggle">
+      <label id="setupTypeClearLabel" class="active">
+        <input type="radio" name="setupType" value="clear" checked> Clear / see-through
+      </label>
+      <label id="setupTypeOpaqueLabel">
+        <input type="radio" name="setupType" value="opaque"> Opaque / can't see through
+      </label>
+    </div>
+    <button class="capture-btn" id="setupCaptureBtn">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 8h2.2l1.1-2h9.4l1.1 2H20a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="1.8"/>
+      </svg>
+      <span id="setupCaptureBtnText">Photograph your container</span>
+    </button>
+    <input type="file" id="setupFileInput" accept="image/*" capture="environment">
+  </div>
+
+  <!-- Normal check-in flow -->
+  <div class="capture-row hidden" id="captureRow">
+    <button class="capture-btn" id="captureBtn">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 8h2.2l1.1-2h9.4l1.1 2H20a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="1.8"/>
+      </svg>
+      <span id="captureBtnText">Check in on your drink</span>
+    </button>
+    <input type="file" id="fileInput1" accept="image/*" capture="environment">
+    <input type="file" id="fileInput2" accept="image/*" capture="environment">
+    <p class="hint" id="captureHint">Snap a photo of your glass. Claude compares it to your last check-in to figure out how much you drank.</p>
+  </div>
+
+  <div class="status-card hidden" id="statusCard">
+    <div class="status-thumbs" id="statusThumbs"></div>
+    <div>
+      <div class="status-text" id="statusText">Analyzing your drink…</div>
+      <div class="status-sub" id="statusSub">This usually takes a few seconds.</div>
+    </div>
+    <div class="spinner" id="spinner"></div>
+  </div>
+
+  <div class="confirm-card hidden" id="confirmCard">
+    <div class="confirm-top">
+      <div class="confirm-thumbs" id="confirmThumbs"></div>
+      <div class="confirm-text">
+        <div class="est" id="confirmEst">12 oz remaining</div>
+        <div class="desc" id="confirmDesc">Tall glass, about half full.</div>
+      </div>
+    </div>
+    <div class="confirm-adjust">
+      <button id="decAmt" aria-label="Decrease">–</button>
+      <span class="val" id="confirmVal">12 oz</span>
+      <button id="incAmt" aria-label="Increase">+</button>
+    </div>
+    <div class="confirm-actions">
+      <button class="discard" id="discardBtn">Discard</button>
+      <button class="accept" id="acceptBtn">Confirm level</button>
+    </div>
+  </div>
+
+  <div class="refill-card hidden" id="refillCard">
+    <div class="question" id="refillQuestion">This looks fuller than last time — did you finish your glass and refill it?</div>
+    <div class="sub">Knowing this helps count what you drank accurately.</div>
+    <div class="refill-actions">
+      <button class="no" id="refillNo">Just topped off</button>
+      <button class="yes" id="refillYes">Yes, finished &amp; refilled</button>
+    </div>
+  </div>
+
+  <div class="log-section">
+    <h2>Today's check-ins</h2>
+    <div id="logList">
+      <div class="log-empty" id="logEmpty">No check-ins yet today. Take a photo of your drink to set today's starting point.</div>
+    </div>
+  </div>
+
+</main>
+
+<div class="modal-overlay hidden" id="settingsOverlay">
+  <div class="modal">
+    <h2>Settings</h2>
+    <label for="apiKeyInput">Claude API Key</label>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+    <label for="sessionNameInput">Your name (optional)</label>
+    <input type="text" id="sessionNameInput" placeholder="e.g. Stino">
+    <label for="goalInput">Daily goal (ounces)</label>
+    <input type="number" id="goalInput" min="8" max="300" step="1" placeholder="64">
+    <label for="reminderInput">Remind me to check in every (minutes, 0 = off)</label>
+    <input type="number" id="reminderInput" min="0" max="480" step="5" placeholder="60">
+    <label for="capacityInput">Container capacity (ounces)</label>
+    <input type="number" id="capacityInput" min="1" max="200" step="1" placeholder="16">
+    <label>Container type</label>
+    <div class="type-toggle" id="settingsTypeToggle">
+      <label id="settingsTypeClearLabel">
+        <input type="radio" name="settingsType" value="clear"> Clear
+      </label>
+      <label id="settingsTypeOpaqueLabel">
+        <input type="radio" name="settingsType" value="opaque"> Opaque
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="close" id="closeSettings">Cancel</button>
+      <button class="save" id="saveSettings">Save</button>
+    </div>
+    <button class="reset-link" id="resetContainer">Set up a different container</button>
+    <p class="note">Your API key, container info, and goal are stored only in this browser's local storage. Nothing is sent anywhere except directly to Anthropic when analyzing a photo. Reminders only fire while this app is open in your browser — they won't reliably work in the background on iPhone.</p>
+  </div>
+</div>
+
+<footer>
+  <a href="https://augustineiacopelli.github.io/appaday/">← Back to AppADay portfolio</a>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+
+  var KEY_API = 'wr_apiKey';
+  var KEY_NAME = 'wr_sessionName';
+  var KEY_GOAL = 'wr_goal';
+  var KEY_REMINDER_MIN = 'wr_reminderMin';
+  var KEY_LAST_CHECKIN = 'wr_lastCheckinTime';
+  var KEY_CAPACITY = 'wr_capacity';
+  var KEY_CONTAINER_TYPE = 'wr_containerType'; // 'clear' | 'opaque'
+  var KEY_CONTAINER_DESC = 'wr_containerDesc';
+  var KEY_LAST_LEVEL = 'wr_lastLevel'; // oz remaining at last check-in
+
+  function safeGet(key){
+    try{ return localStorage.getItem(key); } catch(e){ return null; }
+  }
+  function safeSet(key, val){
+    try{ localStorage.setItem(key, val); } catch(e){}
+  }
+  function safeRemove(key){
+    try{ localStorage.removeItem(key); } catch(e){}
+  }
+
+  function todayStr(){
+    var d = new Date();
+    var y = d.getFullYear();
+    var m = String(d.getMonth()+1).padStart(2,'0');
+    var day = String(d.getDate()).padStart(2,'0');
+    return y + '-' + m + '-' + day;
+  }
+  function logKey(){ return 'wr_log_' + todayStr(); }
+
+  // --- Elements ---
+  var reminderBanner = document.getElementById('reminderBanner');
+  var snoozeBtn = document.getElementById('snoozeBtn');
+
+  var setupCard = document.getElementById('setupCard');
+  var setupCaptureBtn = document.getElementById('setupCaptureBtn');
+  var setupCaptureBtnText = document.getElementById('setupCaptureBtnText');
+  var setupFileInput = document.getElementById('setupFileInput');
+  var setupTypeClearLabel = document.getElementById('setupTypeClearLabel');
+  var setupTypeOpaqueLabel = document.getElementById('setupTypeOpaqueLabel');
+
+  var captureRow = document.getElementById('captureRow');
+  var captureBtn = document.getElementById('captureBtn');
+  var captureBtnText = document.getElementById('captureBtnText');
+  var captureHint = document.getElementById('captureHint');
+  var fileInput1 = document.getElementById('fileInput1');
+  var fileInput2 = document.getElementById('fileInput2');
+
+  var statusCard = document.getElementById('statusCard');
+  var statusThumbs = document.getElementById('statusThumbs');
+  var statusText = document.getElementById('statusText');
+  var statusSub = document.getElementById('statusSub');
+
+  var confirmCard = document.getElementById('confirmCard');
+  var confirmThumbs = document.getElementById('confirmThumbs');
+  var confirmEst = document.getElementById('confirmEst');
+  var confirmDesc = document.getElementById('confirmDesc');
+  var confirmVal = document.getElementById('confirmVal');
+  var decAmt = document.getElementById('decAmt');
+  var incAmt = document.getElementById('incAmt');
+  var discardBtn = document.getElementById('discardBtn');
+  var acceptBtn = document.getElementById('acceptBtn');
+
+  var refillCard = document.getElementById('refillCard');
+  var refillQuestion = document.getElementById('refillQuestion');
+  var refillYes = document.getElementById('refillYes');
+  var refillNo = document.getElementById('refillNo');
+
+  var waterFill = document.getElementById('waterFill');
+  var pctLabel = document.getElementById('pctLabel');
+  var amtLabel = document.getElementById('amtLabel');
+  var goalLine = document.getElementById('goalLine');
+  var logList = document.getElementById('logList');
+  var logEmpty = document.getElementById('logEmpty');
+
+  var settingsBtn = document.getElementById('settingsBtn');
+  var settingsOverlay = document.getElementById('settingsOverlay');
+  var closeSettings = document.getElementById('closeSettings');
+  var saveSettings = document.getElementById('saveSettings');
+  var apiKeyInput = document.getElementById('apiKeyInput');
+  var sessionNameInput = document.getElementById('sessionNameInput');
+  var goalInput = document.getElementById('goalInput');
+  var reminderInput = document.getElementById('reminderInput');
+  var capacityInput = document.getElementById('capacityInput');
+  var settingsTypeClearLabel = document.getElementById('settingsTypeClearLabel');
+  var settingsTypeOpaqueLabel = document.getElementById('settingsTypeOpaqueLabel');
+  var resetContainer = document.getElementById('resetContainer');
+
+  // --- Pending state for current check-in ---
+  var pendingThumbs = [];     // data URLs for display
+  var pendingImages = [];     // {data, mediaType} for API
+  var pendingCurrentLevel = 0;
+  var pendingPrevLevel = null;
+  var pendingDrank = 0;
+  var pendingNote = '';
+
+  // --- Container type toggle helpers ---
+  function setActiveToggle(clearLabel, opaqueLabel, type){
+    if(type === 'opaque'){
+      clearLabel.classList.remove('active');
+      opaqueLabel.classList.add('active');
+      opaqueLabel.querySelector('input').checked = true;
+    } else {
+      opaqueLabel.classList.remove('active');
+      clearLabel.classList.add('active');
+      clearLabel.querySelector('input').checked = true;
+    }
+  }
+  setupTypeClearLabel.addEventListener('click', function(){ setActiveToggle(setupTypeClearLabel, setupTypeOpaqueLabel, 'clear'); });
+  setupTypeOpaqueLabel.addEventListener('click', function(){ setActiveToggle(setupTypeClearLabel, setupTypeOpaqueLabel, 'opaque'); });
+
+  // --- Settings ---
+  function openSettings(){
+    apiKeyInput.value = safeGet(KEY_API) || '';
+    sessionNameInput.value = safeGet(KEY_NAME) || '';
+    goalInput.value = safeGet(KEY_GOAL) || '64';
+    reminderInput.value = safeGet(KEY_REMINDER_MIN) || '0';
+    capacityInput.value = safeGet(KEY_CAPACITY) || '';
+    var type = safeGet(KEY_CONTAINER_TYPE) || 'clear';
+    setActiveToggle(settingsTypeClearLabel, settingsTypeOpaqueLabel, type);
+    settingsOverlay.classList.remove('hidden');
+  }
+  function hideSettings(){
+    settingsOverlay.classList.add('hidden');
+  }
+  settingsBtn.addEventListener('click', openSettings);
+  closeSettings.addEventListener('click', hideSettings);
+  settingsOverlay.addEventListener('click', function(e){
+    if(e.target === settingsOverlay) hideSettings();
+  });
+  settingsTypeClearLabel.addEventListener('click', function(){ setActiveToggle(settingsTypeClearLabel, settingsTypeOpaqueLabel, 'clear'); });
+  settingsTypeOpaqueLabel.addEventListener('click', function(){ setActiveToggle(settingsTypeClearLabel, settingsTypeOpaqueLabel, 'opaque'); });
+
+  saveSettings.addEventListener('click', function(){
+    var key = apiKeyInput.value.trim();
+    var name = sessionNameInput.value.trim();
+    var goal = parseInt(goalInput.value, 10);
+    if(isNaN(goal) || goal < 1) goal = 64;
+    var reminderMin = parseInt(reminderInput.value, 10);
+    if(isNaN(reminderMin) || reminderMin < 0) reminderMin = 0;
+    var capacity = parseFloat(capacityInput.value);
+    var type = document.querySelector('input[name="settingsType"]:checked');
+    type = type ? type.value : 'clear';
+
+    safeSet(KEY_API, key);
+    safeSet(KEY_NAME, name);
+    safeSet(KEY_GOAL, String(goal));
+    safeSet(KEY_REMINDER_MIN, String(reminderMin));
+    if(!isNaN(capacity) && capacity > 0){
+      safeSet(KEY_CAPACITY, String(capacity));
+    }
+    safeSet(KEY_CONTAINER_TYPE, type);
+
+    hideSettings();
+    renderTotals();
+    updateCaptureHint();
+    checkReminder();
+  });
+
+  resetContainer.addEventListener('click', function(){
+    if(!confirm('Set up a new container? Your saved capacity and last-known level will be cleared, but today\'s log stays.')){
+      return;
+    }
+    safeRemove(KEY_CAPACITY);
+    safeRemove(KEY_CONTAINER_TYPE);
+    safeRemove(KEY_CONTAINER_DESC);
+    safeRemove(KEY_LAST_LEVEL);
+    hideSettings();
+    refreshSetupVisibility();
+  });
+
+  function getGoal(){
+    var g = parseInt(safeGet(KEY_GOAL), 10);
+    if(isNaN(g) || g < 1) return 64;
+    return g;
+  }
+  function getCapacity(){
+    var c = parseFloat(safeGet(KEY_CAPACITY));
+    if(isNaN(c) || c <= 0) return null;
+    return c;
+  }
+  function getContainerType(){
+    return safeGet(KEY_CONTAINER_TYPE) === 'opaque' ? 'opaque' : 'clear';
+  }
+
+  // --- Setup flow ---
+  function refreshSetupVisibility(){
+    var capacity = getCapacity();
+    if(capacity === null){
+      setupCard.classList.remove('hidden');
+      captureRow.classList.add('hidden');
+    } else {
+      setupCard.classList.add('hidden');
+      captureRow.classList.remove('hidden');
+      updateCaptureHint();
+    }
+  }
+
+  function updateCaptureHint(){
+    var type = getContainerType();
+    var capacity = getCapacity();
+    if(type === 'opaque'){
+      captureHint.textContent = 'Since your container is opaque, you\'ll take two photos: one of the container from the side, then one looking down at the water surface. Claude uses your container\'s ' + (capacity || '?') + ' oz capacity to estimate the level.';
+    } else {
+      captureHint.textContent = 'Snap a photo of your glass. Claude compares the level to your last check-in (container holds about ' + (capacity || '?') + ' oz) to figure out how much you drank.';
+    }
+  }
+
+  setupCaptureBtn.addEventListener('click', function(){
+    var key = safeGet(KEY_API);
+    if(!key){
+      openSettings();
+      return;
+    }
+    setupFileInput.click();
+  });
+
+  setupFileInput.addEventListener('change', function(){
+    var file = setupFileInput.files && setupFileInput.files[0];
+    if(!file) return;
+    setupFileInput.value = '';
+
+    readFileAsDataUrl(file, function(dataUrl, base64, mediaType){
+      setupCaptureBtn.disabled = true;
+      setupCaptureBtnText.textContent = 'Estimating capacity…';
+
+      var prompt = 'You are looking at a photo of a drinking container (glass, mug, cup, or bottle). ' +
+        'Estimate its total capacity in fluid ounces when completely full, based on its apparent size and shape. ' +
+        'Respond ONLY with a JSON object, no markdown, no preamble, in exactly this format: ' +
+        '{"capacity_oz": <number>, "description": "<one short phrase, under 12 words, describing the container>"}';
+
+      callClaude([{ data: base64, mediaType: mediaType }], prompt, function(err, parsed){
+        setupCaptureBtn.disabled = false;
+        setupCaptureBtnText.textContent = 'Photograph your container';
+        if(err){
+          alert(err.message || 'Could not estimate capacity. Check your API key and try again.');
+          return;
+        }
+        var capacity = Math.round(parseFloat(parsed.capacity_oz));
+        if(isNaN(capacity) || capacity <= 0) capacity = 16;
+        var desc = (parsed.description || '').toString();
+        var type = document.querySelector('input[name="setupType"]:checked');
+        type = type ? type.value : 'clear';
+
+        safeSet(KEY_CAPACITY, String(capacity));
+        safeSet(KEY_CONTAINER_TYPE, type);
+        safeSet(KEY_CONTAINER_DESC, desc);
+
+        alert('Got it — estimated capacity is ' + capacity + ' oz (' + (desc || 'your container') + '). You can adjust this anytime in Settings.');
+        refreshSetupVisibility();
+      });
+    });
+  });
+
+  // --- File reading helper ---
+  function readFileAsDataUrl(file, cb){
+    var reader = new FileReader();
+    reader.onload = function(){
+      var dataUrl = reader.result;
+      var commaIdx = dataUrl.indexOf(',');
+      var meta = dataUrl.substring(5, dataUrl.indexOf(';'));
+      var base64 = dataUrl.substring(commaIdx + 1);
+      cb(dataUrl, base64, meta || file.type || 'image/jpeg');
+    };
+    reader.onerror = function(){
+      alert('Could not read that photo. Try again.');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // --- Claude call helper ---
+  function callClaude(images, prompt, cb){
+    var apiKey = safeGet(KEY_API);
+    var content = [];
+    for(var i=0; i<images.length; i++){
+      content.push({ type: 'image', source: { type: 'base64', media_type: images[i].mediaType, data: images[i].data } });
+    }
+    content.push({ type: 'text', text: prompt });
+
+    fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [ { role: 'user', content: content } ]
+      })
+    })
+    .then(function(res){
+      if(!res.ok){
+        return res.text().then(function(t){
+          var e = new Error('API error ' + res.status);
+          if(res.status === 401){ e.message = 'Your API key was rejected. Open Settings and check it.'; }
+          else { e.message = 'Something went wrong talking to Claude. Try again.'; }
+          throw e;
+        });
+      }
+      return res.json();
+    })
+    .then(function(data){
+      var textBlock = '';
+      var blocks = data.content || [];
+      for(var i=0; i<blocks.length; i++){
+        if(blocks[i].type === 'text'){ textBlock += blocks[i].text; }
+      }
+      var cleaned = textBlock.replace(/```json|```/g, '').trim();
+      var parsed;
+      try{
+        parsed = JSON.parse(cleaned);
+      } catch(e){
+        var match = cleaned.match(/\{[\s\S]*\}/);
+        if(match){
+          parsed = JSON.parse(match[0]);
+        } else {
+          throw new Error('Could not understand Claude\'s response. Try again.');
+        }
+      }
+      cb(null, parsed);
+    })
+    .catch(function(err){
+      console.error('Water Reminder error:', err);
+      cb(err, null);
+    });
+  }
+
+  // --- Check-in flow ---
+  captureBtn.addEventListener('click', function(){
+    var key = safeGet(KEY_API);
+    if(!key){
+      openSettings();
+      return;
+    }
+    if(getContainerType() === 'opaque'){
+      fileInput1.click();
+    } else {
+      fileInput1.click();
+    }
+  });
+
+  fileInput1.addEventListener('change', function(){
+    var file = fileInput1.files && fileInput1.files[0];
+    if(!file) return;
+    fileInput1.value = '';
+
+    readFileAsDataUrl(file, function(dataUrl, base64, mediaType){
+      pendingThumbs = [dataUrl];
+      pendingImages = [{ data: base64, mediaType: mediaType }];
+
+      if(getContainerType() === 'opaque'){
+        // Need a second photo: top-down view
+        captureBtnText.textContent = 'Now the top-down photo…';
+        statusThumbs.innerHTML = '';
+        var img = document.createElement('img');
+        img.className = 'status-thumb';
+        img.src = dataUrl;
+        statusThumbs.appendChild(img);
+        statusText.textContent = 'Side photo captured';
+        statusSub.textContent = 'Now take a photo looking straight down into the container.';
+        statusCard.classList.remove('hidden');
+        confirmCard.classList.add('hidden');
+        setTimeout(function(){ fileInput2.click(); }, 400);
+      } else {
+        runEstimate();
+      }
+    });
+  });
+
+  fileInput2.addEventListener('change', function(){
+    var file = fileInput2.files && fileInput2.files[0];
+    if(!file) return;
+    fileInput2.value = '';
+
+    readFileAsDataUrl(file, function(dataUrl, base64, mediaType){
+      pendingThumbs.push(dataUrl);
+      pendingImages.push({ data: base64, mediaType: mediaType });
+      runEstimate();
+    });
+  });
+
+  function showStatus(thumbs, text, sub){
+    confirmCard.classList.add('hidden');
+    refillCard.classList.add('hidden');
+    statusThumbs.innerHTML = '';
+    for(var i=0; i<thumbs.length; i++){
+      var img = document.createElement('img');
+      img.className = 'status-thumb';
+      img.src = thumbs[i];
+      statusThumbs.appendChild(img);
+    }
+    statusText.textContent = text;
+    statusSub.textContent = sub;
+    statusCard.classList.remove('hidden');
+  }
+  function hideStatus(){
+    statusCard.classList.add('hidden');
+  }
+  function resetCaptureUi(){
+    captureBtn.disabled = false;
+    captureBtnText.textContent = 'Check in on your drink';
+  }
+  function showError(msg){
+    hideStatus();
+    resetCaptureUi();
+    alert(msg);
+  }
+
+  function runEstimate(){
+    captureBtn.disabled = true;
+    captureBtnText.textContent = 'Analyzing…';
+    showStatus(pendingThumbs, 'Analyzing your drink…', 'Estimating how full it is right now.');
+
+    var capacity = getCapacity() || 16;
+    var type = getContainerType();
+    var prompt;
+    if(type === 'opaque'){
+      prompt = 'This opaque container holds about ' + capacity + ' fluid ounces when completely full. ' +
+        'The first photo shows it from the side. The second photo is taken looking straight down into the container, showing the liquid surface. ' +
+        'Using both photos and the known capacity, estimate how many ounces of liquid are currently in the container. ' +
+        'Respond ONLY with a JSON object, no markdown, no preamble, in exactly this format: ' +
+        '{"oz": <number>, "description": "<one short phrase, under 12 words, describing the current fill level>"}';
+    } else {
+      prompt = 'This clear/transparent container holds about ' + capacity + ' fluid ounces when completely full. ' +
+        'Looking at this photo, estimate how many ounces of liquid are currently visible inside it. ' +
+        'If it looks empty, estimate 0. ' +
+        'Respond ONLY with a JSON object, no markdown, no preamble, in exactly this format: ' +
+        '{"oz": <number>, "description": "<one short phrase, under 12 words, describing the current fill level>"}';
+    }
+
+    callClaude(pendingImages, prompt, function(err, parsed){
+      if(err){
+        showError(err.message || 'Something went wrong analyzing the photo.');
+        return;
+      }
+      hideStatus();
+      resetCaptureUi();
+
+      var oz = Math.round(parseFloat(parsed.oz));
+      if(isNaN(oz) || oz < 0) oz = 0;
+      var capacityVal = getCapacity() || 16;
+      if(oz > capacityVal) oz = capacityVal;
+      var description = (parsed.description || '').toString();
+
+      pendingCurrentLevel = oz;
+      pendingPrevLevel = (function(){
+        var v = parseFloat(safeGet(KEY_LAST_LEVEL));
+        return isNaN(v) ? null : v;
+      })();
+
+      confirmThumbs.innerHTML = '';
+      for(var i=0; i<pendingThumbs.length; i++){
+        var img = document.createElement('img');
+        img.className = 'confirm-thumb';
+        img.src = pendingThumbs[i];
+        confirmThumbs.appendChild(img);
+      }
+      confirmEst.textContent = oz + ' oz currently in container';
+      confirmDesc.textContent = description || 'Estimate based on the photo.';
+      confirmVal.textContent = oz + ' oz';
+      confirmCard.classList.remove('hidden');
+
+      // store editable value on the val element via closure variable
+      window.__wrConfirmOz = oz;
+      confirmVal.textContent = oz + ' oz';
+    });
+  }
+
+  decAmt.addEventListener('click', function(){
+    window.__wrConfirmOz = Math.max(0, (window.__wrConfirmOz || 0) - 1);
+    confirmVal.textContent = window.__wrConfirmOz + ' oz';
+  });
+  incAmt.addEventListener('click', function(){
+    var cap = getCapacity() || 200;
+    window.__wrConfirmOz = Math.min(cap, (window.__wrConfirmOz || 0) + 1);
+    confirmVal.textContent = window.__wrConfirmOz + ' oz';
+  });
+
+  discardBtn.addEventListener('click', function(){
+    confirmCard.classList.add('hidden');
+    pendingThumbs = [];
+    pendingImages = [];
+  });
+
+  acceptBtn.addEventListener('click', function(){
+    pendingCurrentLevel = window.__wrConfirmOz || 0;
+
+    if(pendingPrevLevel === null){
+      // First-ever check-in: just set baseline, nothing consumed yet
+      finalizeCheckin(0, 'Starting point set at ' + pendingCurrentLevel + ' oz.');
+      return;
+    }
+
+    if(pendingCurrentLevel <= pendingPrevLevel){
+      var drank = Math.round(pendingPrevLevel - pendingCurrentLevel);
+      var note;
+      if(drank > 0){
+        note = 'Drank ' + drank + ' oz since last check-in.';
+      } else {
+        note = 'No change since last check-in.';
+      }
+      finalizeCheckin(drank, note);
+    } else {
+      // Level went up -> refill scenario, ask the user
+      refillQuestion.textContent = 'This looks fuller than last time (' + pendingCurrentLevel + ' oz now vs ' + Math.round(pendingPrevLevel) + ' oz before) — did you finish your glass before refilling?';
+      confirmCard.classList.add('hidden');
+      refillCard.classList.remove('hidden');
+    }
+  });
+
+  refillYes.addEventListener('click', function(){
+    var drank = Math.round(pendingPrevLevel);
+    finalizeCheckin(drank, 'Finished the previous ' + drank + ' oz, then refilled to ' + pendingCurrentLevel + ' oz.');
+  });
+  refillNo.addEventListener('click', function(){
+    finalizeCheckin(0, 'Topped off without finishing — couldn\'t measure that gap, so tracking restarts from ' + pendingCurrentLevel + ' oz.');
+  });
+
+  function finalizeCheckin(drank, note){
+    refillCard.classList.add('hidden');
+    confirmCard.classList.add('hidden');
+
+    safeSet(KEY_LAST_LEVEL, String(pendingCurrentLevel));
+    safeSet(KEY_LAST_CHECKIN, new Date().toISOString());
+
+    var entries = loadLog();
+    entries.push({
+      time: new Date().toISOString(),
+      drank: drank,
+      level: pendingCurrentLevel,
+      thumbs: pendingThumbs,
+      note: note
+    });
+    saveLog(entries);
+
+    pendingThumbs = [];
+    pendingImages = [];
+
+    renderLog();
+    renderTotals();
+    hideReminderBanner();
+  }
+
+  // --- Log storage ---
+  function loadLog(){
+    var raw = safeGet(logKey());
+    if(!raw) return [];
+    try{
+      var arr = JSON.parse(raw);
+      if(Array.isArray(arr)) return arr;
+      return [];
+    } catch(e){ return []; }
+  }
+  function saveLog(entries){
+    try{
+      safeSet(logKey(), JSON.stringify(entries));
+    } catch(e){
+      var trimmed = entries.map(function(e2){
+        return { drank: e2.drank, level: e2.level, time: e2.time, thumbs: [], note: e2.note };
+      });
+      try{ safeSet(logKey(), JSON.stringify(trimmed)); } catch(e2){}
+    }
+  }
+
+  function formatTime(iso){
+    var d = new Date(iso);
+    var h = d.getHours();
+    var m = d.getMinutes();
+    var ampm = h >= 12 ? 'PM' : 'AM';
+    var h12 = h % 12;
+    if(h12 === 0) h12 = 12;
+    var mm = String(m).padStart(2,'0');
+    return h12 + ':' + mm + ' ' + ampm;
+  }
+
+  function renderLog(){
+    var entries = loadLog();
+    logList.innerHTML = '';
+    if(entries.length === 0){
+      logList.appendChild(logEmpty);
+      logEmpty.style.display = 'block';
+      return;
+    }
+    for(var i = entries.length - 1; i >= 0; i--){
+      (function(entry, idx){
+        var item = document.createElement('div');
+        item.className = 'log-item';
+
+        var thumbsWrap = document.createElement('div');
+        thumbsWrap.className = 'log-thumbs';
+        var thumbs = entry.thumbs || [];
+        if(thumbs.length === 0){
+          var ph = document.createElement('div');
+          ph.className = 'log-thumb';
+          thumbsWrap.appendChild(ph);
+        } else {
+          for(var t=0; t<thumbs.length; t++){
+            var img = document.createElement('img');
+            img.className = 'log-thumb';
+            img.src = thumbs[t];
+            img.alt = '';
+            thumbsWrap.appendChild(img);
+          }
+        }
+        item.appendChild(thumbsWrap);
+
+        var info = document.createElement('div');
+        info.className = 'log-info';
+        var amtEl = document.createElement('div');
+        amtEl.className = 'amt';
+        amtEl.textContent = entry.drank > 0 ? ('+' + entry.drank + ' oz') : '0 oz';
+        var timeEl = document.createElement('div');
+        timeEl.className = 'time';
+        timeEl.textContent = formatTime(entry.time) + ' · ' + (entry.note || '');
+        info.appendChild(amtEl);
+        info.appendChild(timeEl);
+        item.appendChild(info);
+
+        var rm = document.createElement('button');
+        rm.className = 'log-remove';
+        rm.textContent = 'Remove';
+        rm.addEventListener('click', function(){
+          var current = loadLog();
+          current.splice(idx, 1);
+          saveLog(current);
+          renderLog();
+          renderTotals();
+        });
+        item.appendChild(rm);
+
+        logList.appendChild(item);
+      })(entries[i], i);
+    }
+  }
+
+  function renderTotals(){
+    var entries = loadLog();
+    var total = 0;
+    for(var i=0; i<entries.length; i++){ total += entries[i].drank; }
+    var goal = getGoal();
+    var pct = Math.max(0, Math.min(100, Math.round((total / goal) * 100)));
+    waterFill.style.height = pct + '%';
+    pctLabel.textContent = pct + '%';
+    amtLabel.textContent = total + ' / ' + goal + ' oz';
+    goalLine.textContent = 'Goal: ' + goal + ' oz today';
+
+    var light = pct > 38;
+    pctLabel.classList.toggle('light', light);
+    amtLabel.classList.toggle('light', light);
+
+    if(total >= goal){
+      var name = safeGet(KEY_NAME);
+      goalLine.textContent = 'Goal reached — nice work' + (name ? ', ' + name : '') + '.';
+    }
+  }
+
+  // --- Reminders ---
+  function getReminderMinutes(){
+    var m = parseInt(safeGet(KEY_REMINDER_MIN), 10);
+    if(isNaN(m) || m < 0) return 0;
+    return m;
+  }
+  function checkReminder(){
+    var mins = getReminderMinutes();
+    if(mins <= 0){
+      hideReminderBanner();
+      return;
+    }
+    var last = safeGet(KEY_LAST_CHECKIN);
+    var lastTime = last ? new Date(last).getTime() : 0;
+    var now = Date.now();
+    if(now - lastTime >= mins * 60 * 1000){
+      showReminderBanner();
+    } else {
+      hideReminderBanner();
+    }
+  }
+  function showReminderBanner(){
+    reminderBanner.classList.remove('hidden');
+    if(typeof Notification !== 'undefined' && Notification.permission === 'granted'){
+      try{
+        new Notification('Water Reminder', { body: "Time for a check-in — how's your glass looking?" });
+      } catch(e){}
+    }
+  }
+  function hideReminderBanner(){
+    reminderBanner.classList.add('hidden');
+  }
+  snoozeBtn.addEventListener('click', function(){
+    safeSet(KEY_LAST_CHECKIN, new Date().toISOString());
+    hideReminderBanner();
+  });
+
+  if(typeof Notification !== 'undefined' && Notification.permission === 'default'){
+    // Ask once, quietly, without blocking anything if denied
+    try{ Notification.requestPermission(); } catch(e){}
+  }
+
+  // --- Init ---
+  refreshSetupVisibility();
+  renderLog();
+  renderTotals();
+  checkReminder();
+  setInterval(checkReminder, 60000);
+
+  if(!safeGet(KEY_API)){
+    setupCaptureBtnText.textContent = 'Set up API key to start';
+    captureBtnText.textContent = 'Set up API key to start';
+  }
+})();
+</script>
+
+</body>
+</html>
