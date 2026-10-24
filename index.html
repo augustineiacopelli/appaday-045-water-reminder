@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="manifest" href="https://augustineiacopelli.github.io/appaday/manifests/045.webmanifest">
 <script src="https://augustineiacopelli.github.io/appaday/save.js" defer></script>
+<script src="https://augustineiacopelli.github.io/appaday/keys.js" data-app="045" data-legacy-key="wr_apiKey" data-accent="#D14D72" defer></script>
 <title>Water Reminder | AppADay 045</title>
 <style>
   :root{
@@ -734,8 +735,7 @@
 <div class="modal-overlay hidden" id="settingsOverlay">
   <div class="modal">
     <h2>Settings</h2>
-    <label for="apiKeyInput">Claude API Key</label>
-    <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+    <div id="keyMount"><p class="note">The key manager is loading. If this stays, check your connection and reload.</p></div>
     <label for="sessionNameInput">Your name (optional)</label>
     <input type="text" id="sessionNameInput" placeholder="e.g. Stino">
     <label for="goalInput">Daily goal (ounces)</label>
@@ -770,7 +770,6 @@
 (function(){
   'use strict';
 
-  var KEY_API = 'wr_apiKey';
   var KEY_NAME = 'wr_sessionName';
   var KEY_GOAL = 'wr_goal';
   var KEY_REMINDER_MIN = 'wr_reminderMin';
@@ -848,7 +847,6 @@
   var settingsOverlay = document.getElementById('settingsOverlay');
   var closeSettings = document.getElementById('closeSettings');
   var saveSettings = document.getElementById('saveSettings');
-  var apiKeyInput = document.getElementById('apiKeyInput');
   var sessionNameInput = document.getElementById('sessionNameInput');
   var goalInput = document.getElementById('goalInput');
   var reminderInput = document.getElementById('reminderInput');
@@ -882,7 +880,7 @@
 
   // --- Settings ---
   function openSettings(){
-    apiKeyInput.value = safeGet(KEY_API) || '';
+    if(window.AppKeys) window.AppKeys.mountSettings(document.getElementById('keyMount'));
     sessionNameInput.value = safeGet(KEY_NAME) || '';
     goalInput.value = safeGet(KEY_GOAL) || '64';
     reminderInput.value = safeGet(KEY_REMINDER_MIN) || '0';
@@ -903,7 +901,6 @@
   settingsTypeOpaqueLabel.addEventListener('click', function(){ setActiveToggle(settingsTypeClearLabel, settingsTypeOpaqueLabel, 'opaque'); });
 
   saveSettings.addEventListener('click', function(){
-    var key = apiKeyInput.value.trim();
     var name = sessionNameInput.value.trim();
     var goal = parseInt(goalInput.value, 10);
     if(isNaN(goal) || goal < 1) goal = 64;
@@ -913,7 +910,6 @@
     var type = document.querySelector('input[name="settingsType"]:checked');
     type = type ? type.value : 'clear';
 
-    safeSet(KEY_API, key);
     safeSet(KEY_NAME, name);
     safeSet(KEY_GOAL, String(goal));
     safeSet(KEY_REMINDER_MIN, String(reminderMin));
@@ -978,9 +974,8 @@
   }
 
   setupCaptureBtn.addEventListener('click', function(){
-    var key = safeGet(KEY_API);
-    if(!key){
-      openSettings();
+    if(!(window.AppKeys && window.AppKeys.has())){
+      if(window.AppKeys){ window.AppKeys.get(); } else { showError('The key manager did not load. Check your connection and reload.'); }
       return;
     }
     setupFileInput.click();
@@ -1041,7 +1036,14 @@
 
   // --- Claude call helper ---
   function callClaude(images, prompt, cb){
-    var apiKey = safeGet(KEY_API);
+    var keyPromise = window.AppKeys ? window.AppKeys.get() : Promise.resolve(null);
+    keyPromise.then(function(apiKey){
+      if(!apiKey){ cb(new Error('Add your Claude API key with the gear button to continue.'), null); return; }
+      callClaudeWithKey(apiKey, images, prompt, cb);
+    });
+  }
+
+  function callClaudeWithKey(apiKey, images, prompt, cb){
     var content = [];
     for(var i=0; i<images.length; i++){
       content.push({ type: 'image', source: { type: 'base64', media_type: images[i].mediaType, data: images[i].data } });
@@ -1101,9 +1103,8 @@
 
   // --- Check-in flow ---
   captureBtn.addEventListener('click', function(){
-    var key = safeGet(KEY_API);
-    if(!key){
-      openSettings();
+    if(!(window.AppKeys && window.AppKeys.has())){
+      if(window.AppKeys){ window.AppKeys.get(); } else { showError('The key manager did not load. Check your connection and reload.'); }
       return;
     }
     if(getContainerType() === 'opaque'){
@@ -1477,10 +1478,17 @@
   checkReminder();
   setInterval(checkReminder, 60000);
 
-  if(!safeGet(KEY_API)){
-    setupCaptureBtnText.textContent = 'Set up API key to start';
-    captureBtnText.textContent = 'Set up API key to start';
+  function refreshKeyHint(){
+    if(window.AppKeys && window.AppKeys.has()){
+      setupCaptureBtnText.textContent = 'Photograph your container';
+      captureBtnText.textContent = 'Check in on your drink';
+    } else {
+      setupCaptureBtnText.textContent = 'Add your API key to start';
+      captureBtnText.textContent = 'Add your API key to start';
+    }
   }
+  window.addEventListener('appaday:keychange', refreshKeyHint);
+  document.addEventListener('DOMContentLoaded', refreshKeyHint);
 })();
 
 async function getModel(tier = 'sonnet') {
