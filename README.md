@@ -23,7 +23,7 @@ Open the Settings gear (⚙️) to enter your Claude API key, optional name, dai
 
 ## Tech
 
-Single-file vanilla HTML/CSS/JS. No frameworks, no build step. Uses the Anthropic API directly from the browser (`anthropic-dangerous-direct-browser-access: true`), model `claude-sonnet-4-20250514`. All data — API key, container profile, goal, and daily logs — lives in `localStorage`, wrapped in try/catch for sandbox compatibility.
+Single-file vanilla HTML/CSS/JS. No frameworks, no build step. Uses the Anthropic API directly from the browser (`anthropic-dangerous-direct-browser-access: true`) on the current Claude Sonnet model. All data — API key, container profile, goal, and daily logs — lives in `localStorage`, wrapped in try/catch for sandbox compatibility.
 
 ## Part of AppADay
 

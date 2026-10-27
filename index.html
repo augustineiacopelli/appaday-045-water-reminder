@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="manifest" href="https://augustineiacopelli.github.io/appaday/manifests/045.webmanifest">
 <script src="https://augustineiacopelli.github.io/appaday/save.js" defer></script>
+<script src="https://augustineiacopelli.github.io/appaday/models.js"></script>
 <script src="https://augustineiacopelli.github.io/appaday/keys.js" data-app="045" data-legacy-key="wr_apiKey" data-accent="#D14D72" defer></script>
 <title>Water Reminder | AppADay 045</title>
 <style>
@@ -1059,7 +1060,7 @@
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-5-5',
+        model: (window.AppModels ? window.AppModels.id('sonnet') : ''),
         max_tokens: 300,
         messages: [ { role: 'user', content: content } ]
       })
@@ -1491,15 +1492,6 @@
   document.addEventListener('DOMContentLoaded', refreshKeyHint);
 })();
 
-async function getModel(tier = 'sonnet') {
-  try {
-    const response = await fetch('../config.json');
-    const config = await response.json();
-    return config.models[tier];
-  } catch {
-    return 'claude-sonnet-5-5';
-  }
-}
 </script>
 
 </body>
